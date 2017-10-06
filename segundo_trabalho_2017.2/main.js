@@ -169,28 +169,45 @@ function addNail() {
 	var geometry = new THREE.CircleGeometry(5, 32);
 	var material = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
 	var nail = new THREE.Mesh(geometry, material);
+	
 	if (intersect[intersect.length-2] != undefined){
 		var pPolygon = intersect[intersect.length-2];
 	}
+	
 	else {
 		var pPolygon = scene;		
 	}
+	
 	var cPolygon = intersect[intersect.length-1];
 	var m = new THREE.Matrix4();
 	m.getInverse(pPolygon.matrixWorld);
-	pPolygon.add(nail);  // Set back polygon as parent of nail
 	nail.applyMatrix(m);
-	nail.add(cPolygon); // Set nail as parent of front polygon
+
+	pPolygon.add(nail);  // Set the back polygon as the parent of the nail
+	nail.add(cPolygon); // Set the front polygon as the nail's child
 	nail.translateX(mouseX);
 	nail.translateY(mouseY);
 	nail.translateZ(1);
-	cPolygon.translateX(-mouseX);
-	cPolygon.translateY(-mouseY);
-	cPolygon.translateZ(-1);	
+	nail.updateMatrixWorld();
+	cPolygon.applyMatrix(new THREE.Matrix4().getInverse(nail.matrixWorld));	
 }
 
 
 function removeNail() {
+	// Remove the nail of the picked polygon
+	var cPolygon = intersect[intersect.length-1];
+	var nail = cPolygon.parent;
+	var pPolygon = nail.parent;
+
+	nail.applyMatrix(pPolygon.matrixWorld);
+
+	nail.remove(cPolygon);
+	scene.add(cPolygon);
+	pPolygon.remove(nail);
+
+	nail.applyMatrix(new THREE.Matrix4().getInverse(nail.matrixWorld));
+	cPolygon.applyMatrix(nail.matrixWorld);
+
 }
 
 
@@ -199,12 +216,15 @@ function translateMesh(mesh) {
 	currentMouse = new THREE.Vector3 (mouseX, mouseY, 0);
 	oldMouse = new THREE.Vector3 (pmouseX, pmouseY, 0);
 	var translate = new THREE.Vector3();
+	
 	translate.subVectors(currentMouse, oldMouse);
+	
 	var m = new THREE.Matrix4();
 	m.set(	1, 0, 0, translate.x,
 			0, 1, 0, translate.y,
 			0, 0, 1, 0,
 			0, 0, 0, 1	);
+	
 	mesh.applyMatrix(m);
 }
 
@@ -245,10 +265,13 @@ function setup () {
 //
 function mousePressed() {
 	intersect = mousePick();
+
 	if (intersect.length > 0) { // If picking a mesh
 		oldMouse = new THREE.Vector3(pmouseX, pmouseY, 0);
 	}
+	
 	else { // If not picking a mesh
+		
 		if (!drawing) { // If mouse was pressed and is the first vertex of a polygon
 			currentMouse = new THREE.Vector3 (mouseX, mouseY, 0);
 			geometry = new THREE.Geometry();
@@ -258,11 +281,13 @@ function mousePressed() {
 			scene.add (line);
 			drawing = true;
 		}
+		
 		else { // If mouse was pressed and is not the first vertex of the polygon
 			currentMouse = new THREE.Vector3 (mouseX, mouseY, 0);
 			oldgeometry = line.geometry;
 			newgeometry = new THREE.Geometry();
 			newgeometry.vertices = oldgeometry.vertices;
+			
 			if ((distance(currentMouse, oldgeometry.vertices[0]) < L) && (distance(newgeometry.vertices[newgeometry.vertices.length-2], currentMouse) > L)) { // If close the polygon
 				drawing = false;
 				newgeometry.vertices[newgeometry.vertices.length-1] = newgeometry.vertices[0];
@@ -274,9 +299,11 @@ function mousePressed() {
 				scene.add(mesh);
 				scene.remove (line);
 			}
+			
 			else { // If mouse was pressed and is not the first vertex neither the last one of the polygon
 				newgeometry.vertices.push(currentMouse);
 			}
+			
 			line.geometry = newgeometry;
 		}
 	}
@@ -297,17 +324,13 @@ function mouseMoved(){
 
 function mouseDragged() {
 	if (intersect.length > 0) {
-		if (intersect[intersect.length-1].parent.isMesh) {
-			rotateMesh(intersect[intersect.length-1]);
+		if (intersect[intersect.length-1].parent.isMesh) { // If picked polygon has a nail as parent
+			rotateMesh(intersect[intersect.length-1]); // Then rotate the picked polygon
 		}
-		else {
-			translateMesh(intersect[intersect.length-1]);
+		else { // If picked polygon doesn't have a nail as parent
+			translateMesh(intersect[intersect.length-1]); // Then rotate the picked polygon
 		}
 	}
-}
-
-
-function mouseReleased() {
 }
 
 
@@ -315,11 +338,11 @@ function dblClick() {
 	intersect = mousePick();
 	if (intersect.length >= 1) {
 		if (intersect[intersect.length-1].parent != scene) {
-			console.log("REMOVE NAIL");
+			console.log("Nail removed");
 			removeNail();
 		}
 		else if (!intersect[intersect.length-1].parent.isMesh) {
-			console.log("ADD NAIL");
+			console.log("Nail added");
 			addNail();
 		}
 	}
