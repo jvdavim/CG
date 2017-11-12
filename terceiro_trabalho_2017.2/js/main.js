@@ -1,14 +1,16 @@
 // Global variables
 var obj;
 var container;
-var camera, scene, renderer;
-var mouseX = 0, mouseY = 0;
+var camera, scene, renderer, mouseIsPressed, mouseX, mouseY, pMouseX, pmouseY;
+var cMouseX = 0, cMouseY = 0;
 var windowHalfX = window.innerWidth / 2;
 var windowHalfY = window.innerHeight / 2;
+
 
 // Function call
 init();
 animate();
+
 
 // Functions
 function init() {
@@ -16,6 +18,7 @@ function init() {
 	document.body.appendChild( container );
 	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
 	camera.position.z = 250;
+
 
 	// Scene
 	scene = new THREE.Scene();
@@ -25,6 +28,7 @@ function init() {
 	camera.add( pointLight );
 	scene.add( camera );
 
+
 	// Texture
 	var manager = new THREE.LoadingManager();
 	manager.onProgress = function ( item, loaded, total ) {
@@ -32,6 +36,7 @@ function init() {
 	};
 	var textureLoader = new THREE.TextureLoader( manager );
 	var texture = textureLoader.load( 'textures/UV_Grid_Sm.jpg' );
+
 
 	// Model
 	var onProgress = function ( xhr ) {
@@ -54,16 +59,57 @@ function init() {
 		scene.add( object );
 	}, onProgress, onError );
 
+
 	// Render
 	renderer = new THREE.WebGLRenderer();
 	renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	container.appendChild( renderer.domElement );
 
+
 	// Event Listener
 	window.addEventListener( 'resize', onWindowResize, false );
-	window.addEventListener("wheel", onMouseWheel, false); // Chrome, IE9, Safari, Opera
-	window.addEventListener("DOMMouseScroll", onMouseWheel, false); // Firefox
+
+	// Mouse Event Listener
+	mouseIsPressed = false;
+	mouseX = 0;
+	mouseY = 0;
+	pmouseX = 0;
+	pmouseY = 0;
+
+	var setMouse = function () {
+		mouseX = event.clientX;
+		mouseY = event.clientY;
+	}
+
+	renderer.domElement.addEventListener('wheel', onMouseWheel, false); // Chrome, IE9, Safari, Opera
+
+	renderer.domElement.addEventListener ('mousedown', function () {
+		setMouse();
+		mouseIsPressed = true;
+		if (typeof mousePressed !== 'undefined') mousePressed();
+	});
+
+	renderer.domElement.addEventListener ('mousemove', function () { 
+		pmouseX = mouseX;
+		pmouseY = mouseY;
+		setMouse();
+		if (mouseIsPressed) {
+			if (typeof mouseDragged !== 'undefined') mouseDragged(); 
+		}
+		if (typeof mouseMoved !== 'undefined') mouseMoved();
+	});
+
+	renderer.domElement.addEventListener ('mouseup', function () { 
+		mouseIsPressed = false; 
+		if (typeof mouseReleased !== 'undefined') mouseReleased(); 
+	});
+
+	renderer.domElement.addEventListener('dblclick', function () {
+		setMouse();
+		mouseIsPressed = false;
+		if (typeof dblClick != 'undefined') dblClick();
+	});
 }
 
 function onWindowResize() {
@@ -87,8 +133,8 @@ function animate() {
 }
 
 function render() {
-	camera.position.x += ( mouseX - camera.position.x ) * .05;
-	camera.position.y += ( - mouseY - camera.position.y ) * .05;
+	camera.position.x += ( cMouseX - camera.position.x ) * .05;
+	camera.position.y += ( - cMouseY - camera.position.y ) * .05;
 	camera.lookAt( scene.position );
 	renderer.render( scene, camera );
 }
