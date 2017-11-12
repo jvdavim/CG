@@ -1,4 +1,5 @@
 // Global variables
+var obj;
 var container;
 var camera, scene, renderer;
 var mouseX = 0, mouseY = 0;
@@ -49,6 +50,7 @@ function init() {
 			}
 		} );
 		object.position.y = - 95;
+		obj = object;
 		scene.add( object );
 	}, onProgress, onError );
 
@@ -60,6 +62,8 @@ function init() {
 
 	// Event Listener
 	window.addEventListener( 'resize', onWindowResize, false );
+	window.addEventListener("wheel", onMouseWheel, false); // Chrome, IE9, Safari, Opera
+	window.addEventListener("DOMMouseScroll", onMouseWheel, false); // Firefox
 }
 
 function onWindowResize() {
@@ -68,6 +72,13 @@ function onWindowResize() {
 	camera.aspect = window.innerWidth / window.innerHeight;
 	camera.updateProjectionMatrix();
 	renderer.setSize( window.innerWidth, window.innerHeight );
+}
+
+function onMouseWheel(){
+	var e = window.event || e;
+	var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
+	obj.translateZ(delta*10); // Adjust zoom sensibility here
+	return false;
 }
 
 function animate() {
