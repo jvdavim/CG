@@ -1,8 +1,8 @@
 // Global variables
-var obj;
+var toy;
 var container;
-var camera, scene, renderer, mouseIsPressed, mouseX, mouseY, pMouseX, pmouseY;
-var cMouseX = 0, cMouseY = 0;
+var camera, scene, renderer;
+var mouseIsPressed, mouseX, mouseY, pMouseX, pmouseY;
 var windowHalfX = window.innerWidth / 2;
 var windowHalfY = window.innerHeight / 2;
 
@@ -55,7 +55,7 @@ function init() {
 			}
 		} );
 		object.position.y = - 95;
-		obj = object;
+		toy = object;
 		scene.add( object );
 	}, onProgress, onError );
 
@@ -123,7 +123,7 @@ function onWindowResize() {
 function onMouseWheel(){
 	var e = window.event || e;
 	var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
-	obj.translateZ(delta*10); // Adjust zoom sensibility here
+	toy.translateZ(delta*20); // Adjust zoom sensibility here
 	return false;
 }
 
@@ -133,8 +133,19 @@ function animate() {
 }
 
 function render() {
-	camera.position.x += ( cMouseX - camera.position.x ) * .05;
-	camera.position.y += ( - cMouseY - camera.position.y ) * .05;
-	camera.lookAt( scene.position );
+	camera.lookAt( new THREE.Vector3(0,0,0) );
 	renderer.render( scene, camera );
+}
+
+function translate(){
+	var delta = new THREE.Vector3();
+	delta.subVectors(new THREE.Vector3(mouseX,mouseY,0), new THREE.Vector3(pmouseX,pmouseY,0));
+	toy.translateX(delta.x);
+	toy.translateY(-delta.y);
+}
+
+
+// Mouse functions
+function mouseDragged(){
+	translate();
 }
