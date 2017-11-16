@@ -1,5 +1,5 @@
 // Global variables
-var toy;
+var knife;
 var container;
 var camera, scene, renderer;
 var mouseIsPressed, mouseX, mouseY, pMouseX, pmouseY;
@@ -18,7 +18,7 @@ function init() {
 	document.body.appendChild( container );
 	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
 	camera.lookAt( new THREE.Vector3( 0, 0, 0 ) );
-	camera.position.z = 500;
+	camera.position.z = 10;
 
 
 	// Scene
@@ -38,13 +38,14 @@ function init() {
 
 	// Model
 	var loader = new THREE.OBJLoader( manager );
-	loader.load( 'obj/male02/male02.obj', function ( object ) {
+	loader.load( 'obj/knife/knife.obj', function ( object ) {
 		object.traverse( function ( child ) {
 			if ( child instanceof THREE.Mesh ) {
 				child.material.map = texture;
 			}
 		} );
-		toy = object;
+		object.rotateX( 1.5708 );
+		knife = object;
 		scene.add( object );
 	 });
 
@@ -104,10 +105,14 @@ function onWindowResize() {
 	renderer.setSize( window.innerWidth, window.innerHeight );
 }
 
+function distance( a, b ) {
+	return Math.sqrt( Math.pow( a.x - b.x, 2 ) + Math.pow( a.y - b.y, 2 ) + Math.pow( a.z - b.z, 2 ) );
+}
+
 function onMouseWheel() {
 	var e = window.event || e;
 	var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
-	toy.translateZ(delta*20); // Adjust zoom sensibility here
+	knife.position.z += delta*10 ; // Adjust zoom sensibility here
 	return false;
 }
 
@@ -124,16 +129,55 @@ function translate() {
 	var delta = new THREE.Vector3();
 	var mouse = new THREE.Vector3( mouseX, mouseY, 0 );
 	delta.subVectors( mouse, new THREE.Vector3( pmouseX, pmouseY, 0 ) );
-	toy.translateX( delta.x) ;
-	toy.translateY( -delta.y );
+	knife.position.x += delta.x;
+	knife.position.y += -delta.y;
 }
 
-function rotate() {
-	
+function getArcBallVec( x, y, object ) {
+	var mousePos = new THREE.Vector3(  x / window.innerWidth  * 2 - 1, y / window.innerHeight  * 2 + 1, 0 );
+	mousePos.unproject( camera );
+	var dir = mousePos.sub( camera.position ).normalize();
+	var distance = - camera.position.z / dir.z;
+	var pos = camera.position.clone().add( dir.multiplyScalar( distance ) );
+	var objPos = new THREE.Vector3( object.position.x, object.position.y, 0 );
+	var p = new THREE.Vector3( pos.x + objPos.x, pos.y + objPos.y, 0 );
+	// p.subVectors( mousePos, objPos );
+	console.log("mouse:");
+	console.log(mousePos);
+	console.log("obj:");
+	console.log(objPos);
+	console.log("subtracao:");
+	console.log(p);
+	p.y = -p.y;
+	var OPSquared = p.x * p.x + p.y * p.y;
+	if (OPSquared <= 200*200){
+		p.z = Math.sqrt(200*200 - OPSquared);  // Pythagore
+	}
+	else{
+		p.normalize();  // nearest point
+	} 
+	return p;
+}
+
+function rotate( object ) {
+	var vec1 = getArcBallVec( pmouseX, pmouseY, knife );
+	var vec2 = getArcBallVec( mouseX, mouseY, knife );
+	var angle = vec1.angleTo( vec2 );
+	var vec3 = new THREE.Vector3();
+	vec3.crossVectors( vec1, vec2 );
+	vec3.normalize();
+	var quaternion = new THREE.Quaternion();
+	quaternion.setFromAxisAngle( vec3, angle );
+	object.applyQuaternion( quaternion );
 }
 
 
 // Mouse functions
 function mouseDragged() {
-	translate();
+	if ( document.getElementById("translate").checked ) {
+		translate();
+	}
+	else {
+		rotate( knife );
+	}
 }
