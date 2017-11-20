@@ -131,12 +131,32 @@ function render()
 	renderer.render(scene, camera);
 }
 
+function toScreenPosition(obj, camera)
+{
+    var vector = new THREE.Vector3();
+
+    var widthHalf = 0.5*renderer.context.canvas.width;
+    var heightHalf = 0.5*renderer.context.canvas.height;
+
+    obj.updateMatrixWorld();
+    vector.setFromMatrixPosition(obj.matrixWorld);
+    vector.project(camera);
+
+    vector.x = ( vector.x * widthHalf );
+    vector.y = - ( vector.y * heightHalf );
+    vector.z = 0;
+
+    return vector;
+}
+
 function translate() 
 {
 	var delta = new THREE.Vector3();
 	var mouse = new THREE.Vector3(mouseX, mouseY, 0);
 	var pmouse = new THREE.Vector3(pmouseX, pmouseY, 0);
+
 	delta.subVectors(mouse, pmouse);
+
 	knife.position.x += delta.x;
 	knife.position.y += -delta.y;
 }
@@ -144,22 +164,24 @@ function translate()
 function getArcBallVec(x, y, object)
 {
 	var mouse = new THREE.Vector3(x - windowHalfX, y - windowHalfY, 0);
-	var obj = new THREE.Vector3(object.position.x, object.position.y, object.position.z);
-	console.log("projected: ", obj);
-	obj.unproject(camera);
-	console.log("unprojected: ", obj);
+	var obj = toScreenPosition(object, camera);
 	var p = new THREE.Vector3();
+
 	p.subVectors(mouse, obj);
 	p.y = -p.y;
+
 	var OPSquared = p.x * p.x + p.y * p.y;
+
 	if (OPSquared <= 200*200)
 	{
 		p.z = Math.sqrt(200*200 - OPSquared);  // Pythagore
 	}
+
 	else
 	{
 		p.normalize();  // nearest point
 	} 
+
 	return p;
 }
 
@@ -169,9 +191,12 @@ function rotate(object)
 	var vec2 = getArcBallVec(mouseX, mouseY, knife);
 	var angle = vec1.angleTo(vec2);
 	var vec3 = new THREE.Vector3();
+
 	vec3.crossVectors(vec1, vec2);
 	vec3.normalize();
+
 	var quaternion = new THREE.Quaternion();
+
 	quaternion.setFromAxisAngle(vec3, angle);
 	object.applyQuaternion(quaternion);
 }
@@ -184,6 +209,7 @@ function mouseDragged()
 	{
 		translate();
 	}
+
 	else
 	{
 		rotate(knife);
@@ -194,6 +220,8 @@ function mouseWheel()
 {
 	var e = window.event || e;
 	var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
+
 	knife.position.z += delta*10 ; // Adjust zoom sensibility here
+	
 	return false;
 }
