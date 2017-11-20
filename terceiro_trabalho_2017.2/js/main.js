@@ -13,52 +13,56 @@ animate();
 
 
 // Functions
-function init() {
-	container = document.createElement( 'div' );
-	document.body.appendChild( container );
-	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
-	camera.lookAt( new THREE.Vector3( 0, 0, 0 ) );
-	camera.position.z = 10;
+function init()
+{
+	container = document.createElement('div');
+	document.body.appendChild(container);
+	camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 2000);
+	camera.lookAt(new THREE.Vector3(0, 0, 0));
 
 
 	// Scene
 	scene = new THREE.Scene();
-	var ambientLight = new THREE.AmbientLight( 0xcccccc, 0.4 );
-	scene.add( ambientLight );
-	var pointLight = new THREE.PointLight( 0xffffff, 0.8 );
-	camera.add( pointLight );
-	scene.add( camera );
+	var ambientLight = new THREE.AmbientLight(0xcccccc, 0.4);
+	scene.add(ambientLight);
+	var pointLight = new THREE.PointLight(0xffffff, 0.8);
+	camera.add(pointLight);
+	scene.add(camera);
 
 
 	// Texture
 	var manager = new THREE.LoadingManager();
-	var textureLoader = new THREE.TextureLoader( manager );
-	var texture = textureLoader.load( 'textures/UV_Grid_Sm.jpg' );
+	var textureLoader = new THREE.TextureLoader(manager);
+	var texture = textureLoader.load('textures/UV_Grid_Sm.jpg');
 
 
 	// Model
-	var loader = new THREE.OBJLoader( manager );
-	loader.load( 'obj/knife/knife.obj', function ( object ) {
-		object.traverse( function ( child ) {
-			if ( child instanceof THREE.Mesh ) {
+	var loader = new THREE.OBJLoader(manager);
+	loader.load('obj/knife/knife.obj', function (object)
+	{
+		object.traverse(function (child)
+		{
+			if (child instanceof THREE.Mesh)
+			{
 				child.material.map = texture;
 			}
-		} );
-		object.rotateX( 1.5708 );
+		});
+		object.rotateX(1.5708);
+		object.position.z = -30;
 		knife = object;
-		scene.add( object );
+		scene.add(object);
 	 });
 
 
 	// Render
 	renderer = new THREE.WebGLRenderer();
-	renderer.setPixelRatio( window.devicePixelRatio );
-	renderer.setSize( window.innerWidth, window.innerHeight );
-	container.appendChild( renderer.domElement );
+	renderer.setPixelRatio(window.devicePixelRatio);
+	renderer.setSize(window.innerWidth, window.innerHeight);
+	container.appendChild(renderer.domElement);
 
 
 	// Resize Event Listener
-	window.addEventListener( 'resize', onWindowResize, false );
+	window.addEventListener('resize', onWindowResize, false);
 
 	// Mouse Event Listener
 	mouseIsPressed = false;
@@ -67,117 +71,129 @@ function init() {
 	pmouseX = 0;
 	pmouseY = 0;
 
-	var setMouse = function () {
+	var setMouse = function ()
+	{
 		mouseX = event.clientX;
 		mouseY = event.clientY;
 	}
 
-	renderer.domElement.addEventListener( 'wheel', onMouseWheel, false ); // Don't work on Firefox
+	renderer.domElement.addEventListener('wheel', mouseWheel, false); // Don't work on Firefox
 
-	renderer.domElement.addEventListener ( 'mousedown', function () {
+	renderer.domElement.addEventListener ('mousedown', function ()
+	{
 		setMouse();
 		mouseIsPressed = true;
 		if (typeof mousePressed !== 'undefined') mousePressed();
-	} );
+	});
 
-	renderer.domElement.addEventListener ( 'mousemove', function () { 
+	renderer.domElement.addEventListener ('mousemove', function ()
+	{ 
 		pmouseX = mouseX;
 		pmouseY = mouseY;
 		setMouse();
-		if (mouseIsPressed) {
+		if (mouseIsPressed)
+		{
 			if (typeof mouseDragged !== 'undefined') mouseDragged(); 
 		}
 		if (typeof mouseMoved !== 'undefined') mouseMoved();
-	} );
+	});
 
-	renderer.domElement.addEventListener ( 'mouseup', function () { 
+	renderer.domElement.addEventListener ('mouseup', function ()
+	{ 
 		mouseIsPressed = false; 
 		if (typeof mouseReleased !== 'undefined') mouseReleased(); 
-	} );
+	});
 
 }
 
-function onWindowResize() {
+function onWindowResize()
+{
 	windowHalfX = window.innerWidth / 2;
 	windowHalfY = window.innerHeight / 2;
 	camera.aspect = window.innerWidth / window.innerHeight;
 	camera.updateProjectionMatrix();
-	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-function distance( a, b ) {
-	return Math.sqrt( Math.pow( a.x - b.x, 2 ) + Math.pow( a.y - b.y, 2 ) + Math.pow( a.z - b.z, 2 ) );
+function distance(a, b)
+{
+	return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2) + Math.pow(a.z - b.z, 2));
 }
 
-function onMouseWheel() {
-	var e = window.event || e;
-	var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
-	knife.position.z += delta*10 ; // Adjust zoom sensibility here
-	return false;
-}
-
-function animate() {
-	requestAnimationFrame( animate );
+function animate()
+{
+	requestAnimationFrame(animate);
 	render();
 }
 
-function render() {
-	renderer.render( scene, camera );
+function render()
+{
+	renderer.render(scene, camera);
 }
 
-function translate() {
+function translate() 
+{
 	var delta = new THREE.Vector3();
-	var mouse = new THREE.Vector3( mouseX, mouseY, 0 );
-	delta.subVectors( mouse, new THREE.Vector3( pmouseX, pmouseY, 0 ) );
+	var mouse = new THREE.Vector3(mouseX, mouseY, 0);
+	var pmouse = new THREE.Vector3(pmouseX, pmouseY, 0);
+	delta.subVectors(mouse, pmouse);
 	knife.position.x += delta.x;
 	knife.position.y += -delta.y;
 }
 
-function getArcBallVec( x, y, object ) {
-	var mousePos = new THREE.Vector3(  x / window.innerWidth  * 2 - 1, y / window.innerHeight  * 2 + 1, 0 );
-	mousePos.unproject( camera );
-	var dir = mousePos.sub( camera.position ).normalize();
-	var distance = - camera.position.z / dir.z;
-	var pos = camera.position.clone().add( dir.multiplyScalar( distance ) );
-	var objPos = new THREE.Vector3( object.position.x, object.position.y, 0 );
-	var p = new THREE.Vector3( pos.x + objPos.x, pos.y + objPos.y, 0 );
-	// p.subVectors( mousePos, objPos );
-	console.log("mouse:");
-	console.log(mousePos);
-	console.log("obj:");
-	console.log(objPos);
-	console.log("subtracao:");
-	console.log(p);
+function getArcBallVec(x, y, object)
+{
+	var mouse = new THREE.Vector3(x - windowHalfX, y - windowHalfY, 0);
+	var obj = new THREE.Vector3(object.position.x, object.position.y, object.position.z);
+	console.log("projected: ", obj);
+	obj.unproject(camera);
+	console.log("unprojected: ", obj);
+	var p = new THREE.Vector3();
+	p.subVectors(mouse, obj);
 	p.y = -p.y;
 	var OPSquared = p.x * p.x + p.y * p.y;
-	if (OPSquared <= 200*200){
+	if (OPSquared <= 200*200)
+	{
 		p.z = Math.sqrt(200*200 - OPSquared);  // Pythagore
 	}
-	else{
+	else
+	{
 		p.normalize();  // nearest point
 	} 
 	return p;
 }
 
-function rotate( object ) {
-	var vec1 = getArcBallVec( pmouseX, pmouseY, knife );
-	var vec2 = getArcBallVec( mouseX, mouseY, knife );
-	var angle = vec1.angleTo( vec2 );
+function rotate(object)
+{
+	var vec1 = getArcBallVec(pmouseX, pmouseY, knife);
+	var vec2 = getArcBallVec(mouseX, mouseY, knife);
+	var angle = vec1.angleTo(vec2);
 	var vec3 = new THREE.Vector3();
-	vec3.crossVectors( vec1, vec2 );
+	vec3.crossVectors(vec1, vec2);
 	vec3.normalize();
 	var quaternion = new THREE.Quaternion();
-	quaternion.setFromAxisAngle( vec3, angle );
-	object.applyQuaternion( quaternion );
+	quaternion.setFromAxisAngle(vec3, angle);
+	object.applyQuaternion(quaternion);
 }
 
 
 // Mouse functions
-function mouseDragged() {
-	if ( document.getElementById("translate").checked ) {
+function mouseDragged()
+{
+	if (document.getElementById("translate").checked)
+	{
 		translate();
 	}
-	else {
-		rotate( knife );
+	else
+	{
+		rotate(knife);
 	}
+}
+
+function mouseWheel()
+{
+	var e = window.event || e;
+	var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
+	knife.position.z += delta*10 ; // Adjust zoom sensibility here
+	return false;
 }
