@@ -5,7 +5,7 @@ var camera, scene, renderer;
 var mouseIsPressed, mouseX, mouseY, pMouseX, pmouseY;
 var windowHalfX = window.innerWidth / 2;
 var windowHalfY = window.innerHeight / 2;
-
+var slider, sliderOutput;
 
 // Function call
 init();
@@ -104,6 +104,8 @@ function init()
 		if (typeof mouseReleased !== 'undefined') mouseReleased(); 
 	});
 
+	//Rage Slider
+	slider = document.getElementById("myRange");
 }
 
 function onWindowResize()
@@ -224,4 +226,9 @@ function mouseWheel()
 	knife.position.z += delta*10 ; // Adjust zoom sensibility here
 	
 	return false;
+}
+
+// Update the current slider value (each time you drag the slider handle)
+slider.oninput = function() {
+	console.log(slider.value);
 }
