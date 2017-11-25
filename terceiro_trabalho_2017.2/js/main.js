@@ -6,6 +6,7 @@ var mouseIsPressed, mouseX, mouseY, pMouseX, pmouseY;
 var windowHalfX = window.innerWidth / 2;
 var windowHalfY = window.innerHeight / 2;
 var slider, sliderOutput;
+var circleList = [];
 
 // Function call
 init();
@@ -106,6 +107,21 @@ function init()
 
 	//Rage Slider
 	slider = document.getElementById("myRange");
+
+	//Frame Circles
+	for (i = 0; i < 100; i++)
+	{
+		var geometry = new THREE.CircleBufferGeometry(5, 32);
+		var material = new THREE.MeshBasicMaterial({ color: 0xa4a4a5, side: THREE.DoubleSide });
+		var circle = new THREE.Mesh(geometry, material);
+
+		circle.position.z = -700;
+		circle.position.y = -(windowHalfY - 85);
+		circle.position.x = (window.innerWidth)/100 * i -(windowHalfX);
+
+		circleList.push(circle);
+		scene.add(circle);
+	}
 }
 
 function onWindowResize()
@@ -229,6 +245,7 @@ function mouseWheel()
 }
 
 // Update the current slider value (each time you drag the slider handle)
-slider.oninput = function() {
+slider.oninput = function()
+{
 	console.log(slider.value);
 }
