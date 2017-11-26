@@ -1,12 +1,11 @@
 // Global variables
 var knife;
-var container;
 var camera, scene, renderer;
 var mouseIsPressed, mouseX, mouseY, pMouseX, pmouseY;
 var windowHalfX = window.innerWidth / 2;
 var windowHalfY = window.innerHeight / 2;
 var slider, sliderOutput;
-var circleList = [];
+
 
 // Function call
 init();
@@ -16,19 +15,34 @@ animate();
 // Functions
 function init()
 {
-	container = document.createElement('div');
-	document.body.appendChild(container);
-	camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 2000);
-	camera.lookAt(new THREE.Vector3(0, 0, 0));
-
 
 	// Scene
 	scene = new THREE.Scene();
 	var ambientLight = new THREE.AmbientLight(0xcccccc, 0.4);
 	scene.add(ambientLight);
+
+
+	// Perspective camera for 3D drawing
+	camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 2000);
+	camera.lookAt(new THREE.Vector3(0, 0, 0));
 	var pointLight = new THREE.PointLight(0xffffff, 0.8);
 	camera.add(pointLight);
+
+
+	// Renderer will use a canvas taking the whole window
+	renderer = new THREE.WebGLRenderer({antialias: true});
+	renderer.sortObjects = false;
+	renderer.setPixelRatio(window.devicePixelRatio);
+	renderer.setSize(window.innerWidth, window.innerHeight);
+
+
+	// Append camera to the page
+	document.body.appendChild(renderer.domElement);
 	scene.add(camera);
+
+
+	// Set resize (reshape) callback
+	window.addEventListener('resize', onWindowResize, false);
 
 
 	// Texture
@@ -54,16 +68,6 @@ function init()
 		scene.add(object);
 	 });
 
-
-	// Render
-	renderer = new THREE.WebGLRenderer();
-	renderer.setPixelRatio(window.devicePixelRatio);
-	renderer.setSize(window.innerWidth, window.innerHeight);
-	container.appendChild(renderer.domElement);
-
-
-	// Resize Event Listener
-	window.addEventListener('resize', onWindowResize, false);
 
 	// Mouse Event Listener
 	mouseIsPressed = false;
@@ -105,32 +109,27 @@ function init()
 		if (typeof mouseReleased !== 'undefined') mouseReleased(); 
 	});
 
+
 	//Rage Slider
 	slider = document.getElementById("myRange");
 
+
 	//Frame Circles
-	for (i = 0; i < 100; i++)
-	{
-		var geometry = new THREE.CircleBufferGeometry(5, 32);
-		var material = new THREE.MeshBasicMaterial({ color: 0xa4a4a5, side: THREE.DoubleSide });
-		var circle = new THREE.Mesh(geometry, material);
-
-		circle.position.z = -700;
-		circle.position.y = -(windowHalfY - 85);
-		circle.position.x = (window.innerWidth)/100 * i -(windowHalfX);
-
-		circleList.push(circle);
-		scene.add(circle);
-	}
+	// var ctx=container.getContext("2d");
+	// ctx.beginPath();
+	// ctx.arc(100,75,50,0,2*Math.PI);
+	// ctx.stroke();
 }
 
-function onWindowResize()
-{
-	windowHalfX = window.innerWidth / 2;
-	windowHalfY = window.innerHeight / 2;
-	camera.aspect = window.innerWidth / window.innerHeight;
+// 
+// Reshape callback
+//
+function onWindowResize() {
+	camera.right = window.innerWidth;
+	camera.bottom = window.innerHeight;
 	camera.updateProjectionMatrix();
-	renderer.setSize(window.innerWidth, window.innerHeight);
+	renderer.setSize(width,height);
+	render();
 }
 
 function distance(a, b)
@@ -239,7 +238,7 @@ function mouseWheel()
 	var e = window.event || e;
 	var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
 
-	knife.position.z += delta*10 ; // Adjust zoom sensibility here
+	knife.position.z += delta*1 ; // Adjust zoom sensibility here
 	
 	return false;
 }
