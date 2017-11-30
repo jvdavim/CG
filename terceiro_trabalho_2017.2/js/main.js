@@ -4,7 +4,9 @@ var camera, scene, renderer;
 var mouseIsPressed, mouseX, mouseY, pMouseX, pmouseY;
 var windowHalfX = window.innerWidth / 2;
 var windowHalfY = window.innerHeight / 2;
-var slider, sliderOutput;
+var slider, sliderOutput, circles;
+var keyFrame = [];
+var quaternion = new THREE.Quaternion();
 
 
 // Function call
@@ -115,20 +117,32 @@ function init()
 
 
 	//Frame Circles
-	// var ctx=container.getContext("2d");
-	// ctx.beginPath();
-	// ctx.arc(100,75,50,0,2*Math.PI);
-	// ctx.stroke();
+	circles = document.getElementById("circlescontainer");
+	for (i=0; i<100; i++)
+	{
+		var span = document.createElement('span');
+		span.className = "dot";
+		span.addEventListener('click', onKeyFrame, false);
+		span.id = i;
+		circles.appendChild(span);
+	}
+
+	//Key Frames
+	for (i=0; i<100; i++)
+	{
+		keyFrame.push(0);
+	}
 }
 
 // 
 // Reshape callback
 //
-function onWindowResize() {
+function onWindowResize()
+{
 	camera.right = window.innerWidth;
 	camera.bottom = window.innerHeight;
 	camera.updateProjectionMatrix();
-	renderer.setSize(width,height);
+	renderer.setSize(window.innerWidth,window.innerHeight);
 	render();
 }
 
@@ -212,8 +226,6 @@ function rotate(object)
 	vec3.crossVectors(vec1, vec2);
 	vec3.normalize();
 
-	var quaternion = new THREE.Quaternion();
-
 	quaternion.setFromAxisAngle(vec3, angle);
 	object.applyQuaternion(quaternion);
 }
@@ -246,5 +258,41 @@ function mouseWheel()
 // Update the current slider value (each time you drag the slider handle)
 slider.oninput = function()
 {
-	console.log(slider.value);
+	var kf = 0;
+	var index = -1;
+	var taxa = 0;
+
+	for (i=slider.value; i<100; i++)
+	{
+		if (keyFrame[i] != 0)
+		{
+			kf = keyFrame[i];
+			index = i;
+			break;
+		}
+	}
+
+	if (kf != 0)
+	{
+		taxa = 1.0/ ((index - slider.value)+1);
+		console.log(taxa);
+		knife.position.lerp(kf[1], 1);
+		knife.quaternion.slerp(kf[0], 1);
+	}
+}
+
+function onKeyFrame(event)
+{
+	var circle = event.srcElement.id;
+	var color = document.getElementById(circle).style.backgroundColor;
+	if (color != 'green')
+	{
+		document.getElementById(circle).style.backgroundColor = 'green';
+		keyFrame[circle] = [quaternion, knife.position];
+	}
+	else
+	{
+		document.getElementById(circle).style.backgroundColor = '#bbb';
+		keyFrame[circle] = 0;
+	}
 }
