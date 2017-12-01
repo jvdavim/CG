@@ -6,7 +6,9 @@ var windowHalfX = window.innerWidth / 2;
 var windowHalfY = window.innerHeight / 2;
 var slider, sliderOutput, circles;
 var keyFrame = [];
-var quaternion = new THREE.Quaternion();
+var play;
+var playing = false;
+var animation;
 
 
 // Function call
@@ -112,8 +114,8 @@ function init()
 	});
 
 
-	//Rage Slider
-	slider = document.getElementById("myRange");
+	//Play Button
+	play = document.getElementById("play");
 
 
 	//Frame Circles
@@ -222,6 +224,7 @@ function rotate(object)
 	var vec2 = getArcBallVec(mouseX, mouseY, knife);
 	var angle = vec1.angleTo(vec2);
 	var vec3 = new THREE.Vector3();
+	var quaternion = new THREE.Quaternion();
 
 	vec3.crossVectors(vec1, vec2);
 	vec3.normalize();
@@ -255,31 +258,6 @@ function mouseWheel()
 	return false;
 }
 
-// Update the current slider value (each time you drag the slider handle)
-slider.oninput = function()
-{
-	var kf = 0;
-	var index = -1;
-	var taxa = 0;
-
-	for (i=slider.value; i<100; i++)
-	{
-		if (keyFrame[i] != 0)
-		{
-			kf = keyFrame[i];
-			index = i;
-			break;
-		}
-	}
-
-	if (kf != 0)
-	{
-		taxa = 1.0/ ((index - slider.value)+1);
-		console.log(taxa);
-		knife.position.lerp(kf[1], 1);
-		knife.quaternion.slerp(kf[0], 1);
-	}
-}
 
 function onKeyFrame(event)
 {
@@ -288,11 +266,98 @@ function onKeyFrame(event)
 	if (color != 'green')
 	{
 		document.getElementById(circle).style.backgroundColor = 'green';
-		keyFrame[circle] = [quaternion, knife.position];
+		var q = new THREE.Quaternion(knife.quaternion.x, knife.quaternion.y, knife.quaternion.z, knife.quaternion.w);
+		var p = new THREE.Vector3(knife.position.x, knife.position.y, knife.position.z);
+		keyFrame[circle] = [q, p];
 	}
 	else
 	{
 		document.getElementById(circle).style.backgroundColor = '#bbb';
 		keyFrame[circle] = 0;
+	}
+}
+
+function onPlay()
+{
+	if (!playing) 
+	{ 
+		playing = true;
+		var pkeyFrame, nkeyFrame, pIndex, nIndex;
+		var t = 0;
+		var alpha;
+		animation = setInterval(function ()
+		{
+			t += 1;
+
+			if (t >= 99)
+			{
+				t = 0;
+			}
+
+			for (i=99; i<=0; i--) //caso nao tenha key frame anterior, o anterior é o último
+			{
+				if (keyFrame[i] != 0)
+				{
+					pkeyFrame = keyFrame[i];
+					pIndex = i;
+					break;
+				}
+			}
+
+			for (i=0; i<t; i++) //achar keyframe anterior
+			{
+				if (keyFrame[i] != 0)
+				{
+					pkeyFrame = keyFrame[i];
+					pIndex = i;
+				}
+				
+			}	
+
+			for (i=t; i<100; i++) //achar próximo keyframe
+			{
+				if (keyFrame[i] != 0)
+				{
+					nkeyFrame = keyFrame[i];
+					nIndex = i;
+					break;
+				}
+			}
+
+			if (nkeyFrame === undefined) //caso nao tenha próximo keyframe, o próximo é o primeiro
+			{
+				for (i=0; i<100; i++)
+				{
+					if (keyFrame[i] != 0)
+					{
+						nkeyFrame = keyFrame[i];
+						nIndex = i;
+						break;
+					}
+				}
+			}
+
+			if (pIndex<t && t<nIndex)
+			{
+				alpha = (t-pIndex) / (nIndex-pIndex);
+			}
+			if (pIndex<t && nIndex<t)
+			{
+				alpha = (t-nIndex) / (99-nIndex+pIndex);
+			}
+			if (pIndex>t && nIndex>t)
+			{
+				alpha = (99-nIndex+t) / (pIndex-t);
+			}
+			knife.position.lerpVectors(pkeyFrame[1], nkeyFrame[1], alpha);
+			THREE.Quaternion.slerp(pkeyFrame[0], nkeyFrame[0], knife.quaternion, alpha);
+		}, 20)
+
+	
+	}
+	else
+	{
+		playing = false;
+		clearInterval(animation);
 	}
 }
