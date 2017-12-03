@@ -1,0 +1,13 @@
+-Controles básicos-
+
+Rotação: Clique e arraste com checkbox de translação DESMARCADA no canto superior esquerdo da janela. Arcball centrada no objeto e de tamanho fixo.
+
+*Translação(x,y): Clique e arraste com checkbox de translação MARCADA no canto superior esquerdo da janela.
+
+Translação(z): Scroll do mouse.
+
+Animação: Marcar keyframes clicando diretamente nas bolinhas e clicar no botão "PLAY".
+
+* A translação começa muito escorregadia devido ao fato de não ter sido implementado com a posição do mouse projetado, mas 
+com a posição do mouse na janela. O objeto começa muito próximo da câmera por ser pequeno, portanto a translação é muito maior
+do que o arraste do mouse. Para ter um melhor controle da translação basta dar zoom out.
